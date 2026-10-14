@@ -1,0 +1,290 @@
+{
+  "exported_at": "2026-10-13T16:55:57.218487+00:00",
+  "sklearn_version": "1.9.0",
+  "source_notebook": "credit_wise.ipynb",
+  "default_model": "naive_bayes",
+  "positive_class": "Yes",
+  "test_size": 200,
+  "train_size": 800,
+  "metrics": {
+    "logistic_regression": {
+      "precision": 0.7833333333333333,
+      "recall": 0.7704918032786885,
+      "f1": 0.7768595041322314,
+      "accuracy": 0.865,
+      "confusion_matrix": [
+        [
+          126,
+          13
+        ],
+        [
+          14,
+          47
+        ]
+      ]
+    },
+    "knn": {
+      "precision": 0.6274509803921569,
+      "recall": 0.5245901639344263,
+      "f1": 0.5714285714285714,
+      "accuracy": 0.76,
+      "confusion_matrix": [
+        [
+          120,
+          19
+        ],
+        [
+          29,
+          32
+        ]
+      ]
+    },
+    "naive_bayes": {
+      "precision": 0.8035714285714286,
+      "recall": 0.7377049180327869,
+      "f1": 0.7692307692307693,
+      "accuracy": 0.865,
+      "confusion_matrix": [
+        [
+          128,
+          11
+        ],
+        [
+          16,
+          45
+        ]
+      ]
+    }
+  },
+  "categories": {
+    "Employment_Status": [
+      "Contract",
+      "Salaried",
+      "Self-employed",
+      "Unemployed"
+    ],
+    "Marital_Status": [
+      "Married",
+      "Single"
+    ],
+    "Loan_Purpose": [
+      "Business",
+      "Car",
+      "Education",
+      "Home",
+      "Personal"
+    ],
+    "Property_Area": [
+      "Rural",
+      "Semiurban",
+      "Urban"
+    ],
+    "Gender": [
+      "Female",
+      "Male"
+    ],
+    "Employer_Category": [
+      "Business",
+      "Government",
+      "MNC",
+      "Private",
+      "Unemployed"
+    ],
+    "Education_Level": [
+      "Graduate",
+      "Not Graduate"
+    ]
+  },
+  "numeric_ranges": {
+    "Applicant_Income": {
+      "min": 2009.0,
+      "max": 19988.0,
+      "mean": 10852.571578947369
+    },
+    "Coapplicant_Income": {
+      "min": 1.0,
+      "max": 9996.0,
+      "mean": 5082.4557894736845
+    },
+    "Age": {
+      "min": 21.0,
+      "max": 59.0,
+      "mean": 39.97157894736842
+    },
+    "Dependents": {
+      "min": 0.0,
+      "max": 3.0,
+      "mean": 1.4747368421052631
+    },
+    "Credit_Score": {
+      "min": 550.0,
+      "max": 799.0,
+      "mean": 676.0336842105263
+    },
+    "Existing_Loans": {
+      "min": 0.0,
+      "max": 4.0,
+      "mean": 1.9505263157894737
+    },
+    "DTI_Ratio": {
+      "min": 0.1,
+      "max": 0.6,
+      "mean": 0.34726315789473683
+    },
+    "Savings": {
+      "min": 65.0,
+      "max": 19996.0,
+      "mean": 9940.452631578948
+    },
+    "Collateral_Value": {
+      "min": 36.0,
+      "max": 49954.0,
+      "mean": 24802.79263157895
+    },
+    "Loan_Amount": {
+      "min": 1015.0,
+      "max": 39995.0,
+      "mean": 20522.825263157894
+    },
+    "Loan_Term": {
+      "min": 12.0,
+      "max": 84.0,
+      "mean": 48.0
+    }
+  },
+  "dataset": {
+    "rows": 1000,
+    "labelled_rows": 950,
+    "missing_cells": 1000,
+    "approved": 298,
+    "rejected": 652,
+    "credit_score_bins": [
+      {
+        "label": "550-574",
+        "total": 92,
+        "approved": 0
+      },
+      {
+        "label": "575-599",
+        "total": 73,
+        "approved": 0
+      },
+      {
+        "label": "600-624",
+        "total": 100,
+        "approved": 0
+      },
+      {
+        "label": "625-649",
+        "total": 98,
+        "approved": 0
+      },
+      {
+        "label": "650-674",
+        "total": 78,
+        "approved": 39
+      },
+      {
+        "label": "675-699",
+        "total": 85,
+        "approved": 47
+      },
+      {
+        "label": "700-724",
+        "total": 100,
+        "approved": 47
+      },
+      {
+        "label": "725-749",
+        "total": 103,
+        "approved": 53
+      },
+      {
+        "label": "750-774",
+        "total": 92,
+        "approved": 48
+      },
+      {
+        "label": "775-799",
+        "total": 81,
+        "approved": 48
+      }
+    ],
+    "dti_bins": [
+      {
+        "label": "0.1-0.2",
+        "total": 169,
+        "approved": 88
+      },
+      {
+        "label": "0.2-0.3",
+        "total": 189,
+        "approved": 101
+      },
+      {
+        "label": "0.3-0.4",
+        "total": 199,
+        "approved": 94
+      },
+      {
+        "label": "0.4-0.5",
+        "total": 149,
+        "approved": 0
+      },
+      {
+        "label": "0.5-0.6",
+        "total": 197,
+        "approved": 0
+      }
+    ],
+    "by_employment": [
+      {
+        "label": "Contract",
+        "total": 199,
+        "approved": 79
+      },
+      {
+        "label": "Salaried",
+        "total": 448,
+        "approved": 131
+      },
+      {
+        "label": "Self-employed",
+        "total": 173,
+        "approved": 54
+      },
+      {
+        "label": "Unemployed",
+        "total": 86,
+        "approved": 21
+      }
+    ],
+    "by_purpose": [
+      {
+        "label": "Business",
+        "total": 192,
+        "approved": 61
+      },
+      {
+        "label": "Car",
+        "total": 192,
+        "approved": 49
+      },
+      {
+        "label": "Education",
+        "total": 169,
+        "approved": 51
+      },
+      {
+        "label": "Home",
+        "total": 180,
+        "approved": 57
+      },
+      {
+        "label": "Personal",
+        "total": 169,
+        "approved": 59
+      }
+    ]
+  }
+}

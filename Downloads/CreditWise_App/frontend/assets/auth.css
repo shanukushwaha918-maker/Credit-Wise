@@ -1,0 +1,157 @@
+/* =====================================================================
+   CreditWise accounts: boot screen, login / signup, user menu.
+   Uses the design tokens defined in styles.css.
+   ===================================================================== */
+.boot { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; background: var(--page); z-index: 100; }
+.boot .brand-mark { width: 52px; height: 52px; animation: pulse 1.4s infinite; }
+.boot .brand-mark svg { width: 28px; height: 28px; }
+.boot-text { font-size: 13px; color: var(--muted); }
+
+/* ------------------------------------------------------------ layout */
+.auth { display: grid; grid-template-columns: minmax(380px, 0.95fr) minmax(0, 1.05fr); min-height: 100vh; }
+.auth-brand {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 40px;
+  padding: 36px 48px; color: #c9d4ea;
+  background:
+    radial-gradient(90% 60% at 10% 0%, rgba(59, 130, 246, 0.35) 0%, transparent 60%),
+    radial-gradient(70% 50% at 100% 100%, rgba(99, 102, 241, 0.25) 0%, transparent 60%),
+    linear-gradient(160deg, var(--navy-900) 0%, var(--navy-950) 100%);
+}
+.auth-brand::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image: linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(80% 70% at 30% 40%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(80% 70% at 30% 40%, #000 30%, transparent 75%);
+}
+.auth-brand > * { position: relative; }
+.auth-brand-top { display: flex; align-items: center; gap: 12px; color: #fff; }
+.auth-hero { max-width: 460px; }
+.auth-hero-art { width: 190px; margin-bottom: 26px; display: block; }
+.auth-hero h1 { color: #fff; font-size: 40px; line-height: 1.1; letter-spacing: -0.035em; }
+.auth-hero p { margin-top: 16px; font-size: 15.5px; line-height: 1.6; color: #a9b8d6; }
+.auth-points { list-style: none; margin: 28px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.auth-points li { display: flex; align-items: center; gap: 12px; font-size: 14.5px; color: #dbe5f7; }
+.auth-points span {
+  width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08); color: #93c5fd;
+}
+.auth-points svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.auth-brand-foot { font-size: 12.5px; color: #6f80a6; }
+
+.auth-main { display: flex; flex-direction: column; align-items: center; padding: 24px 32px 28px; background: var(--page); }
+.auth-top { align-self: stretch; display: flex; justify-content: space-between; align-items: center; min-height: 40px; }
+.auth-mobile-brand { display: none; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 17px; }
+.auth-mobile-brand .brand-mark { width: 32px; height: 32px; }
+.auth-mobile-brand .brand-mark svg { width: 18px; height: 18px; }
+.auth-top .theme-toggle { margin-left: auto; }
+
+/* ------------------------------------------------------------ card & form */
+.auth-card {
+  width: 100%; max-width: 420px; margin: auto 0; padding: 34px 32px 28px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 22px;
+  box-shadow: var(--shadow), 0 30px 60px -30px rgba(15, 27, 51, 0.25);
+}
+.auth-form { display: flex; flex-direction: column; gap: 16px; animation: viewIn .35s var(--ease); }
+.auth-head h2 { font-size: 26px; letter-spacing: -0.03em; }
+.auth-head p { margin-top: 6px; }
+.auth-alert { margin: 0; }
+.auth-form .field-error { min-height: 0; }
+.btn-block { width: 100%; margin-top: 4px; }
+.auth-switch { text-align: center; font-size: 13.5px; color: var(--text-2); margin-top: 2px; }
+.auth-switch a { font-weight: 650; }
+.auth-foot { margin-top: 18px; font-size: 12px; color: var(--muted); text-align: center; }
+
+.pw-wrap input { padding-right: 46px; }
+.pw-toggle {
+  position: absolute; right: 6px; width: 34px; height: 30px; border: 0; border-radius: 8px; background: transparent;
+  color: var(--muted); cursor: pointer; display: grid; place-items: center;
+}
+.pw-toggle:hover { color: var(--text); background: var(--hover); }
+.pw-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.pw-toggle .i-eye-off { display: none; }
+.pw-toggle[aria-pressed="true"] .i-eye { display: none; }
+.pw-toggle[aria-pressed="true"] .i-eye-off { display: block; }
+
+.pw-strength { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+.pw-bars { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.pw-bars span { height: 4px; border-radius: 4px; background: var(--sunk); transition: background .2s; }
+.pw-label { font-size: 12px; font-weight: 600; min-width: 48px; text-align: right; color: var(--muted); }
+.pw-strength[data-score="1"] .pw-bars span:nth-child(-n+1) { background: var(--critical); }
+.pw-strength[data-score="2"] .pw-bars span:nth-child(-n+2) { background: var(--warning); }
+.pw-strength[data-score="3"] .pw-bars span:nth-child(-n+3) { background: var(--series-1); }
+.pw-strength[data-score="4"] .pw-bars span { background: var(--good); }
+.pw-rules { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.pw-rules li { display: inline-flex; align-items: center; gap: 6px; }
+.pw-rules li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--axis); transition: background .2s; }
+.pw-rules li.ok { color: var(--good-ink); }
+.pw-rules li.ok::before { background: var(--good); }
+
+.check { position: relative; display: inline-flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-2); cursor: pointer; user-select: none; }
+.check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.check-box {
+  width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--axis); display: grid; place-items: center; flex: none;
+  background: var(--surface-2); transition: background .15s, border-color .15s;
+}
+.check input:checked + .check-box { background: var(--accent); border-color: var(--accent); }
+.check input:checked + .check-box::after { content: ""; width: 9px; height: 5px; border: 2px solid #fff; border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); }
+.check input:focus-visible + .check-box { box-shadow: var(--ring); }
+
+/* ------------------------------------------------------------ avatars & menus */
+.avatar {
+  width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none;
+  background: var(--brand-grad); color: #fff; font-size: 12.5px; font-weight: 700; letter-spacing: .02em;
+}
+.avatar-lg { width: 42px; height: 42px; border-radius: 12px; font-size: 15px; }
+.user-menu { position: relative; }
+.user-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 8px 0 4px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface); cursor: pointer; color: var(--muted); box-shadow: var(--shadow-sm);
+}
+.user-btn:hover, .user-btn[aria-expanded="true"] { border-color: var(--border-strong); color: var(--text); }
+.user-btn .chev { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.user-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: 270px; padding: 8px;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: var(--shadow-lg);
+  animation: toastIn .18s var(--ease);
+}
+.menu-head { display: flex; align-items: center; gap: 12px; padding: 8px 8px 10px; min-width: 0; }
+.menu-head > div { min-width: 0; }
+.menu-head b { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-head > div > span { display: block; font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-meta { font-size: 11.5px; color: var(--muted); padding: 0 8px 8px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+.menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: 9px; border: 0; background: none;
+  font: inherit; font-size: 13.5px; color: var(--text); cursor: pointer; text-align: left;
+}
+.menu-item:hover { background: var(--hover); text-decoration: none; }
+.menu-item svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; color: var(--muted); }
+.menu-item.danger, .menu-item.danger svg { color: var(--critical-ink); }
+.menu-item.danger:hover { background: var(--critical-wash); }
+
+.sidebar-foot { display: flex; flex-direction: column; gap: 4px; }
+.sidebar-user {
+  display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--r-lg);
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.sidebar-user-text { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.3; }
+.sidebar-user-text b { color: #fff; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-user-text span { color: #8b9bbd; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-logout { color: #8b9bbd; }
+.sidebar-logout:hover { color: #fff; background: rgba(255, 255, 255, 0.08); border-color: transparent; }
+
+/* ------------------------------------------------------------ responsive */
+@media (max-width: 960px) {
+  .auth { grid-template-columns: 1fr; }
+  .auth-brand { display: none; }
+  .auth-mobile-brand { display: inline-flex; }
+}
+@media (max-width: 560px) {
+  .auth-main { padding: 16px 14px 20px; }
+  .auth-card { padding: 26px 20px 22px; border-radius: 18px; }
+  .auth-head h2 { font-size: 23px; }
+  .user-btn .chev { display: none; }
+  .user-btn { padding: 0 4px; }
+  .menu { width: min(270px, calc(100vw - 28px)); }
+}
