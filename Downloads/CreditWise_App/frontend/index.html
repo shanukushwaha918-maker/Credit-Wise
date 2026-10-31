@@ -157,21 +157,30 @@
     </a>
 
     <nav class="nav" aria-label="Main">
-      <div class="nav-group-label">Overview</div>
+      <div class="nav-group-label">FinTech Hub</div>
       <a href="#dashboard" class="nav-link" data-view="dashboard">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
         <span>Dashboard</span></a>
-      <a href="#models" class="nav-link" data-view="models">
-        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-6"/><path d="M16 8h4v4"/></svg>
-        <span>Model performance</span></a>
+      <a href="#credit-profile" class="nav-link" data-view="credit-profile">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Credit Profile</span></a>
+      <a href="#loan-calculator" class="nav-link" data-view="loan-calculator">
+        <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/></svg>
+        <span>Loan Affordability</span></a>
+      <a href="#ai-assistant" class="nav-link" data-view="ai-assistant">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>AI Assistant</span></a>
 
-      <div class="nav-group-label">Workspace</div>
+      <div class="nav-group-label">ML Underwriting</div>
       <a href="#predict" class="nav-link" data-view="predict">
         <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
-        <span>New prediction</span></a>
+        <span>ML Predictor</span></a>
+      <a href="#models" class="nav-link" data-view="models">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-6"/><path d="M16 8h4v4"/></svg>
+        <span>Model Performance</span></a>
       <a href="#history" class="nav-link" data-view="history">
         <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 7v5l3 2"/></svg>
-        <span>History</span>
+        <span>Prediction History</span>
         <span class="nav-count" id="history-count" hidden></span></a>
     </nav>
 
@@ -255,6 +264,7 @@
       <!-- ------------------------------------------------ Dashboard -->
       <section class="view" id="view-dashboard" data-title="Dashboard"
                data-subtitle="Portfolio analytics from the training data and the notebook's models">
+        <div id="dash-user-profile" style="margin-bottom: 20px;"></div>
         <div class="kpis" id="dash-kpis">
           <div class="kpi skeleton"></div><div class="kpi skeleton"></div>
           <div class="kpi skeleton"></div><div class="kpi skeleton"></div>
@@ -273,6 +283,225 @@
         <div class="grid grid-main">
           <article class="card" id="dash-recent"></article>
           <article class="card" id="chart-purpose"></article>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------ Credit Profile -->
+      <section class="view" id="view-credit-profile" data-title="Credit Profile Analysis"
+               data-subtitle="Comprehensive financial health assessment, risk identification, and personalized improvement roadmap">
+        <div class="disclaimer-banner">
+          <svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <div>
+            <strong>Bureau Disclaimer:</strong> The Credit Health Index (300–850) is an educational statistical evaluation designed for personal financial planning. It is <strong>NOT an official bureau score</strong> (such as CIBIL, Experian, or Equifax), which require verified bank reporting data.
+          </div>
+        </div>
+
+        <div class="predict-layout">
+          <!-- Form -->
+          <form class="card form-card" id="credit-profile-form" novalidate>
+            <div class="form-top">
+              <div>
+                <h2>Your Financial Parameters</h2>
+                <p class="muted small">Provide your actual financial obligations to generate your Credit Health Index.</p>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="field-grid">
+                <div class="field" data-cfield="monthly_income">
+                  <label for="cp-income">Monthly income (₹) <span class="req">*</span></label>
+                  <input id="cp-income" name="monthly_income" type="number" min="1000" step="500" placeholder="e.g. 60000" required>
+                  <span class="field-error"></span>
+                </div>
+                <div class="field" data-cfield="employment_type">
+                  <label for="cp-employment">Employment type <span class="req">*</span></label>
+                  <select id="cp-employment" name="employment_type" required>
+                    <option value="Salaried">Salaried</option>
+                    <option value="Self-employed">Self-employed</option>
+                    <option value="Business">Business</option>
+                    <option value="Freelance">Freelance</option>
+                    <option value="Unemployed">Unemployed</option>
+                  </select>
+                  <span class="field-error"></span>
+                </div>
+                <div class="field" data-cfield="existing_loans">
+                  <label for="cp-loans">Existing active loans <span class="req">*</span></label>
+                  <input id="cp-loans" name="existing_loans" type="number" min="0" max="50" placeholder="e.g. 1" required>
+                  <span class="field-error"></span>
+                </div>
+                <div class="field" data-cfield="monthly_emi">
+                  <label for="cp-emi">Total monthly EMI (₹) <span class="req">*</span></label>
+                  <input id="cp-emi" name="monthly_emi" type="number" min="0" step="500" placeholder="e.g. 12000" required>
+                  <span class="field-error"></span>
+                </div>
+                <div class="field" data-cfield="credit_card_utilization">
+                  <label for="cp-util">Card utilization (%) <span class="req">*</span></label>
+                  <input id="cp-util" name="credit_card_utilization" type="number" min="0" max="100" step="0.1" placeholder="e.g. 25" required>
+                  <span class="field-error"></span>
+                </div>
+                <div class="field" data-cfield="repayment_history">
+                  <label for="cp-history">Repayment history <span class="req">*</span></label>
+                  <select id="cp-history" name="repayment_history" required>
+                    <option value="On-time / No delays">On-time / No delays</option>
+                    <option value="Occasional delays (1-30 days)">Occasional delays (1-30 days)</option>
+                    <option value="Frequent delays (30+ days)">Frequent delays (30+ days)</option>
+                    <option value="Default / Settlement">Default / Settlement</option>
+                  </select>
+                  <span class="field-error"></span>
+                </div>
+                <div class="field" data-cfield="active_accounts">
+                  <label for="cp-accounts">Active credit accounts <span class="req">*</span></label>
+                  <input id="cp-accounts" name="active_accounts" type="number" min="0" max="50" placeholder="e.g. 3" required>
+                  <span class="field-error"></span>
+                </div>
+                <div class="field" data-cfield="recent_enquiries">
+                  <label for="cp-enquiries">Recent inquiries (past 6m) <span class="req">*</span></label>
+                  <input id="cp-enquiries" name="recent_enquiries" type="number" min="0" max="30" placeholder="e.g. 1" required>
+                  <span class="field-error"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="banner banner-error form-errors" id="cp-errors" role="alert" hidden></div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary btn-lg" id="cp-submit-btn">
+                <span class="spinner" aria-hidden="true"></span>
+                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
+                <span class="btn-label">Calculate & Save Profile</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Result Panel -->
+          <div class="result-col" id="cp-result-col">
+            <article class="card" id="cp-result-card">
+              <div class="empty-state" style="padding: 40px 20px; text-align: center; color: var(--muted);">
+                <svg viewBox="0 0 24 24" style="width: 48px; height: 48px; stroke: var(--muted); fill: none; margin-bottom: 12px;"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+                <p>Fill in your financial parameters on the left to calculate your Credit Health Index and unlock personalized recommendations.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------ Loan Affordability -->
+      <section class="view" id="view-loan-calculator" data-title="Loan Affordability & Eligibility"
+               data-subtitle="Precise monthly EMI calculation, debt-to-income limits, and lender affordability assessment">
+        <div class="disclaimer-banner">
+          <svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <div>
+            <strong>Lender Disclaimer:</strong> These calculations are financial mathematical projections. Actual loan sanctions, final interest rates, and loan processing terms depend on formal bank appraisal.
+          </div>
+        </div>
+
+        <div class="predict-layout">
+          <!-- Form -->
+          <form class="card form-card" id="loan-calc-form" novalidate>
+            <div class="form-top">
+              <div>
+                <h2>Loan Parameters</h2>
+                <p class="muted small">Estimate your monthly commitment and affordability headroom.</p>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="field-grid">
+                <div class="field">
+                  <label for="lc-income">Monthly income (₹) <span class="req">*</span></label>
+                  <input id="lc-income" name="monthly_income" type="number" min="1000" step="500" placeholder="e.g. 75000" required>
+                </div>
+                <div class="field">
+                  <label for="lc-exist-emi">Existing monthly EMI (₹) <span class="req">*</span></label>
+                  <input id="lc-exist-emi" name="existing_emi" type="number" min="0" step="500" placeholder="e.g. 10000" required>
+                </div>
+                <div class="field">
+                  <label for="lc-amount">Loan amount requested (₹) <span class="req">*</span></label>
+                  <input id="lc-amount" name="loan_amount" type="number" min="10000" step="10000" placeholder="e.g. 1000000" required>
+                </div>
+                <div class="field">
+                  <label for="lc-rate">Annual interest rate (%) <span class="req">*</span></label>
+                  <input id="lc-rate" name="interest_rate" type="number" min="1" max="50" step="0.1" placeholder="e.g. 9.5" required>
+                </div>
+                <div class="field">
+                  <label for="lc-tenure">Tenure (months) <span class="req">*</span></label>
+                  <input id="lc-tenure" name="tenure_months" type="number" min="6" max="360" step="6" placeholder="e.g. 60" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary btn-lg" id="lc-calc-btn">
+                <span class="spinner" aria-hidden="true"></span>
+                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
+                <span class="btn-label">Assess Loan Affordability</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Result Panel -->
+          <div class="result-col" id="lc-result-col">
+            <article class="card" id="lc-result-card">
+              <div class="empty-state" style="padding: 40px 20px; text-align: center; color: var(--muted);">
+                <svg viewBox="0 0 24 24" style="width: 48px; height: 48px; stroke: var(--muted); fill: none; margin-bottom: 12px;"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><path d="M16 14v4M8 10h.01M12 10h.01M16 10h.01"/></svg>
+                <p>Enter your loan details to view your projected monthly EMI, total interest, debt-to-income ratio, and full amortization schedule.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------ AI Assistant -->
+      <section class="view" id="view-ai-assistant" data-title="AI Financial Assistant"
+               data-subtitle="Ask questions about credit scores, debt payoff, interest rate strategies, and personalized credit growth">
+        <div class="chat-container">
+          <div class="chat-header">
+            <div class="chat-header-info">
+              <div class="chat-header-avatar">
+                <svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM4 11a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7zm4 4h.01M16 15h.01M12 17h.01"/></svg>
+              </div>
+              <div>
+                <strong>CreditWise AI Assistant</strong>
+                <div style="font-size: 12px; color: var(--muted);" id="ai-status-text">Online · Ready to advise</div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="ai-clear-btn">
+              <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Clear Chat
+            </button>
+          </div>
+
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-bubble assistant">
+              Hello! I am your <strong>CreditWise AI Financial Assistant</strong>. Ask me anything about:
+              <ul>
+                <li>How credit scoring and bureau metrics work</li>
+                <li>Strategies to lower credit card utilization</li>
+                <li>Fixed vs floating interest rates and loan prepayment</li>
+                <li>How to safely maximize your loan approval eligibility</li>
+              </ul>
+              You can toggle profile context below to receive personalized recommendations based on your saved credit profile.
+            </div>
+          </div>
+
+          <div class="chat-footer">
+            <div class="prompt-chips">
+              <button type="button" class="prompt-chip" data-prompt="How is my credit score calculated and what affects it most?">How is credit score calculated?</button>
+              <button type="button" class="prompt-chip" data-prompt="What is the 30% credit card utilization rule and how can I optimize it?">Credit card 30% rule</button>
+              <button type="button" class="prompt-chip" data-prompt="How does Debt-to-Income (DTI) ratio affect my loan approval?">How does DTI affect loans?</button>
+              <button type="button" class="prompt-chip" data-prompt="Should I choose a floating or fixed interest rate for my loan?">Floating vs fixed interest?</button>
+            </div>
+            <label class="chat-consent">
+              <input type="checkbox" id="ai-consent-check" checked>
+              <span>Allow AI to review my CreditWise Profile to give personalized financial advice</span>
+            </label>
+            <form class="chat-input-row" id="chat-form">
+              <input type="text" class="chat-input" id="chat-input" placeholder="Type your financial question (e.g., 'How can I improve my credit profile?')..." autocomplete="off" required>
+              <button type="submit" class="btn btn-primary" id="chat-send-btn">
+                <span class="spinner" aria-hidden="true"></span>
+                <span class="btn-label">Send</span>
+              </button>
+            </form>
+          </div>
         </div>
       </section>
 

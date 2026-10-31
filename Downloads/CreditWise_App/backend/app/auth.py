@@ -9,11 +9,10 @@
 import hashlib
 import hmac
 import secrets
-import sqlite3
-import threading
 import time
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
+
+from .db import Database, IntegrityError
 
 SCRYPT = {"n": 2 ** 14, "r": 8, "p": 1, "dklen": 32}
 SESSION_DAYS_REMEMBER = 30
@@ -62,30 +61,26 @@ class LockedOut(Exception):
 
 
 class AuthStore:
-    def __init__(self, path: Path):
-        path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(path, check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
-        self._lock = threading.Lock()
+    def __init__(self, target):
+        self.db = Database(target)
         self._failures: dict[str, list[float]] = {}
-        with self._lock:
-            self._conn.executescript("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+        self.db.script([
+            f"""CREATE TABLE IF NOT EXISTS users (
+                    id {self.db.id_column},
                     name TEXT NOT NULL,
-                    email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+                    email TEXT NOT NULL,
                     password_hash TEXT NOT NULL,
                     created_at TEXT NOT NULL
-                );
-                CREATE TABLE IF NOT EXISTS sessions (
+                )""",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(LOWER(email))",
+            """CREATE TABLE IF NOT EXISTS sessions (
                     token_hash TEXT PRIMARY KEY,
-                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                     created_at TEXT NOT NULL,
                     expires_at TEXT NOT NULL
-                );
-                CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
-            """)
-            self._conn.commit()
+                )""",
+            "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)",
+        ])
 
     # ---------------------------------------------------------------- users
     @staticmethod
@@ -95,22 +90,19 @@ class AuthStore:
     def create_user(self, name: str, email: str, password: str) -> dict:
         pw_hash = hash_password(password)
         created = _now().isoformat(timespec="seconds")
-        with self._lock:
-            try:
-                cur = self._conn.execute(
-                    "INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
-                    (name, email, pw_hash, created))
-                self._conn.commit()
-            except sqlite3.IntegrityError:
-                raise EmailTaken()
-            row = self._conn.execute("SELECT * FROM users WHERE id = ?", (cur.lastrowid,)).fetchone()
+        try:
+            new_id = self.db.run(
+                "INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
+                (name, email, pw_hash, created), returning_id=True)
+        except IntegrityError:
+            raise EmailTaken()
+        row = self.db.run("SELECT * FROM users WHERE id = ?", (new_id,), fetch="one")
         return self.public(row)
 
     def authenticate(self, email: str, password: str) -> dict | None:
         key = email.lower()
         self._check_lockout(key)
-        with self._lock:
-            row = self._conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        row = self.db.run("SELECT * FROM users WHERE LOWER(email) = LOWER(?)", (email,), fetch="one")
         ok = verify_password(password, row["password_hash"] if row else _DUMMY_HASH) and row is not None
         if not ok:
             self._failures.setdefault(key, []).append(time.monotonic())
@@ -131,27 +123,22 @@ class AuthStore:
         token = secrets.token_urlsafe(32)
         lifetime = timedelta(days=SESSION_DAYS_REMEMBER) if remember else timedelta(hours=SESSION_HOURS_DEFAULT)
         now = _now()
-        with self._lock:
-            self._conn.execute("DELETE FROM sessions WHERE expires_at < ?", (now.isoformat(),))
-            self._conn.execute(
-                "INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
-                (_token_hash(token), user_id, now.isoformat(), (now + lifetime).isoformat()))
-            self._conn.commit()
+        self.db.run("DELETE FROM sessions WHERE expires_at < ?", (now.isoformat(),))
+        self.db.run(
+            "INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+            (_token_hash(token), user_id, now.isoformat(), (now + lifetime).isoformat()))
         return token, int(lifetime.total_seconds()) if remember else None
 
     def user_for_token(self, token: str | None) -> dict | None:
         if not token:
             return None
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id "
-                "WHERE s.token_hash = ? AND s.expires_at > ?",
-                (_token_hash(token), _now().isoformat())).fetchone()
+        row = self.db.run(
+            "SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id "
+            "WHERE s.token_hash = ? AND s.expires_at > ?",
+            (_token_hash(token), _now().isoformat()), fetch="one")
         return self.public(row) if row else None
 
     def delete_session(self, token: str | None):
         if not token:
             return
-        with self._lock:
-            self._conn.execute("DELETE FROM sessions WHERE token_hash = ?", (_token_hash(token),))
-            self._conn.commit()
+        self.db.run("DELETE FROM sessions WHERE token_hash = ?", (_token_hash(token),))

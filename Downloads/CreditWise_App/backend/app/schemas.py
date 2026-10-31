@@ -66,3 +66,43 @@ class PredictRequest(BaseModel):
     applicant: Applicant
     model: Optional[ModelName] = None
     save: bool = True
+
+
+# --- Module 2: Credit Profile Schemas ---
+EmploymentType = Literal["Salaried", "Self-employed", "Business", "Freelance", "Unemployed"]
+RepaymentHistory = Literal[
+    "On-time / No delays",
+    "Occasional delays (1-30 days)",
+    "Frequent delays (30+ days)",
+    "Default / Settlement"
+]
+
+
+class CreditProfileInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    monthly_income: float = Field(gt=0, le=100_000_000, description="Gross monthly income")
+    employment_type: EmploymentType
+    existing_loans: int = Field(ge=0, le=100, description="Total active loan facilities")
+    monthly_emi: float = Field(ge=0, le=10_000_000, description="Total current monthly EMI payout")
+    credit_card_utilization: float = Field(ge=0, le=100, description="Credit card limit usage percentage (0-100)")
+    repayment_history: RepaymentHistory
+    active_accounts: int = Field(ge=0, le=100, description="Total credit cards and credit lines active")
+    recent_enquiries: int = Field(ge=0, le=50, description="Hard loan/card inquiries in the past 6 months")
+
+
+# --- Module 4: Loan Eligibility Schemas ---
+class LoanAssessmentInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    monthly_income: float = Field(gt=0, le=100_000_000)
+    existing_emi: float = Field(ge=0, le=10_000_000)
+    loan_amount: float = Field(gt=0, le=500_000_000)
+    interest_rate: float = Field(gt=0.01, le=100)
+    tenure_months: int = Field(ge=1, le=480)
+    save: bool = True
+
+
+# --- Module 3: AI Assistant Schemas ---
+class AssistantChatInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    message: str = Field(min_length=1, max_length=4000)
+    include_profile_context: bool = True

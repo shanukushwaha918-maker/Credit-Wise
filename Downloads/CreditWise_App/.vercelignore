@@ -1,0 +1,6 @@
+.venv
+tests
+**/__pycache__
+backend/data/history.db
+requirements-dev.txt
+*.bat

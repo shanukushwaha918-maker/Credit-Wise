@@ -98,7 +98,7 @@
   }
 
   /* ============================================================ routing */
-  const VIEWS = ["dashboard", "predict", "history", "models"];
+  const VIEWS = ["dashboard", "credit-profile", "loan-calculator", "ai-assistant", "predict", "history", "models"];
   const AUTH_VIEWS = ["login", "signup"];
   function currentView() { const v = location.hash.slice(1); return VIEWS.includes(v) ? v : "dashboard"; }
   function route() {
@@ -122,14 +122,19 @@
       if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     const v = $("#view-" + view);
-    $("#view-title").textContent = v.dataset.title;
-    $("#view-subtitle").textContent = v.dataset.subtitle;
-    $("#crumb-current").textContent = v.dataset.title;
-    document.title = `${v.dataset.title} · CreditWise`;
+    if (v) {
+      $("#view-title").textContent = v.dataset.title;
+      $("#view-subtitle").textContent = v.dataset.subtitle;
+      $("#crumb-current").textContent = v.dataset.title;
+      document.title = `${v.dataset.title} · CreditWise`;
+    }
     renderPageActions(view);
     closeSidebar();
     window.scrollTo({ top: 0 });
     if (view === "history" || view === "dashboard") loadHistory();
+    if (view === "dashboard") loadDashboardSummary();
+    if (view === "credit-profile") loadCreditProfile();
+    if (view === "ai-assistant") loadAiChatHistory();
     requestAnimationFrame(() => C.redrawAll());
   }
 
@@ -137,7 +142,12 @@
     const host = $("#page-actions");
     const actions = {
       dashboard: `<button type="button" class="btn btn-secondary" data-action="refresh">${I.refresh}Refresh</button>
-                  <a class="btn btn-primary" href="#predict">${I.plus}New prediction</a>`,
+                  <a class="btn btn-primary" href="#credit-profile">${I.plus}Credit Profile</a>`,
+      "credit-profile": `<a class="btn btn-secondary" href="#loan-calculator">${I.arrow}Loan Affordability</a>
+                         <a class="btn btn-primary" href="#ai-assistant">${I.bolt}Ask AI</a>`,
+      "loan-calculator": `<a class="btn btn-secondary" href="#credit-profile">${I.shield}Credit Profile</a>
+                          <a class="btn btn-primary" href="#predict">${I.plus}ML Prediction</a>`,
+      "ai-assistant": `<button type="button" class="btn btn-secondary" id="ai-clear-action-btn">${I.trash}Clear Chat</button>`,
       predict: `<button type="button" class="btn btn-secondary" data-action="sample">${I.dice}Load a real applicant</button>`,
       history: `<button type="button" class="btn btn-secondary" data-action="export">${I.download}Export CSV</button>
                 <button type="button" class="btn btn-danger" data-action="clear">${I.trash}Clear all</button>`,
@@ -1150,6 +1160,415 @@
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeUserMenu(); });
   }
 
+  /* ======================================================= FinTech Modules */
+  async function loadDashboardSummary() {
+    try {
+      const summary = await api("/api/dashboard/summary");
+      state.dashboardSummary = summary;
+      renderDashboardUserProfile(summary.credit_profile);
+    } catch (e) {
+      console.warn("Could not load dashboard summary", e);
+    }
+  }
+
+  function renderDashboardUserProfile(cp) {
+    const el = $("#dash-user-profile");
+    if (!el) return;
+    if (!cp || !cp.analysis) {
+      el.innerHTML = `
+        <div class="card" style="padding: 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%); border-left: 4px solid var(--accent);">
+          <div>
+            <h3 style="margin-bottom: 4px;">Set up your Credit Profile</h3>
+            <p class="muted small">Calculate your educational Credit Health Index, identify risk factors, and unlock personalized loan advice.</p>
+          </div>
+          <a href="#credit-profile" class="btn btn-primary btn-sm">${I.plus} Analyze Credit Profile</a>
+        </div>
+      `;
+      return;
+    }
+
+    const { profile, analysis } = cp;
+    const idx = analysis.credit_health_index;
+    const cat = analysis.category;
+    const badgeClass = idx >= 750 ? "badge-excellent" : idx >= 700 ? "badge-good" : idx >= 650 ? "badge-fair" : "badge-poor";
+    const pct = Math.max(0, Math.min(100, ((idx - 300) / 550) * 100));
+    const circumference = 2 * Math.PI * 45;
+    const offset = circumference - (pct / 100) * circumference;
+    const colorVar = idx >= 700 ? "--good" : idx >= 650 ? "--warning" : "--critical";
+
+    el.innerHTML = `
+      <div class="score-hero">
+        <div class="score-circle-wrap">
+          <svg viewBox="0 0 100 100">
+            <circle class="track" cx="50" cy="50" r="45" />
+            <circle class="progress" cx="50" cy="50" r="45" stroke="var(${colorVar})" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" />
+          </svg>
+          <div class="score-circle-val">
+            <span class="score-number">${idx}</span>
+            <span class="score-max">Score (300-850)</span>
+          </div>
+        </div>
+        <div class="score-meta">
+          <span class="score-badge ${badgeClass}">${esc(cat)}</span>
+          <h3 style="margin-bottom: 4px;">Your Credit Health Profile</h3>
+          <p class="muted small" style="margin-bottom: 10px;">${esc(analysis.summary)}</p>
+          <div style="display:flex;gap:18px;margin-top:10px;flex-wrap:wrap;font-size:13px;">
+            <span><strong>Income:</strong> ₹${fmtNum(profile.monthly_income)}/mo</span>
+            <span><strong>Active EMI:</strong> ₹${fmtNum(profile.monthly_emi)}/mo</span>
+            <span><strong>Card Usage:</strong> ${profile.credit_card_utilization}%</span>
+            <span><strong>DTI:</strong> ${analysis.dti_percent}%</span>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="#credit-profile" class="btn btn-secondary btn-sm">Update Profile</a>
+            <a href="#loan-calculator" class="btn btn-secondary btn-sm">Assess New Loan</a>
+            <a href="#ai-assistant" class="btn btn-primary btn-sm">${I.bolt}Ask AI Advisor</a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadCreditProfile() {
+    try {
+      const res = await api("/api/profile");
+      if (res.has_profile && res.data) {
+        const p = res.data.profile;
+        if ($("#cp-income")) $("#cp-income").value = p.monthly_income;
+        if ($("#cp-employment")) $("#cp-employment").value = p.employment_type;
+        if ($("#cp-loans")) $("#cp-loans").value = p.existing_loans;
+        if ($("#cp-emi")) $("#cp-emi").value = p.monthly_emi;
+        if ($("#cp-util")) $("#cp-util").value = p.credit_card_utilization;
+        if ($("#cp-history")) $("#cp-history").value = p.repayment_history;
+        if ($("#cp-accounts")) $("#cp-accounts").value = p.active_accounts;
+        if ($("#cp-enquiries")) $("#cp-enquiries").value = p.recent_enquiries;
+        renderCreditProfileResult(res.data.analysis);
+      }
+    } catch (e) {
+      console.warn("Error loading profile", e);
+    }
+  }
+
+  async function saveCreditProfile(e) {
+    e.preventDefault();
+    const btn = $("#cp-submit-btn");
+    setBusy(btn, true, "Analyzing…");
+    const errBox = $("#cp-errors");
+    errBox.hidden = true;
+
+    try {
+      const payload = {
+        monthly_income: parseFloat($("#cp-income").value),
+        employment_type: $("#cp-employment").value,
+        existing_loans: parseInt($("#cp-loans").value, 10),
+        monthly_emi: parseFloat($("#cp-emi").value) || 0,
+        credit_card_utilization: parseFloat($("#cp-util").value) || 0,
+        repayment_history: $("#cp-history").value,
+        active_accounts: parseInt($("#cp-accounts").value, 10) || 0,
+        recent_enquiries: parseInt($("#cp-enquiries").value, 10) || 0,
+      };
+
+      const res = await api("/api/profile", { method: "PUT", body: payload });
+      renderCreditProfileResult(res.data.analysis);
+      toast("Credit Profile analyzed and saved successfully!");
+    } catch (err) {
+      errBox.innerHTML = `${I.alert}<div>${esc(err.message)}</div>`;
+      errBox.hidden = false;
+      toast(err.message, "err");
+    } finally {
+      setBusy(btn, false, "Calculate & Save Profile");
+    }
+  }
+
+  function renderCreditProfileResult(analysis) {
+    const card = $("#cp-result-card");
+    if (!card) return;
+    const idx = analysis.credit_health_index;
+    const cat = analysis.category;
+    const badgeClass = idx >= 750 ? "badge-excellent" : idx >= 700 ? "badge-good" : idx >= 650 ? "badge-fair" : "badge-poor";
+    const pct = Math.max(0, Math.min(100, ((idx - 300) / 550) * 100));
+    const circumference = 2 * Math.PI * 45;
+    const offset = circumference - (pct / 100) * circumference;
+    const colorVar = idx >= 700 ? "--good" : idx >= 650 ? "--warning" : "--critical";
+
+    const factors = analysis.factors;
+    const factorsHtml = `
+      <div class="factors-row">
+        <div class="factor-card">
+          <div class="factor-title">Repayment History</div>
+          <div class="factor-val">${esc(factors.repayment_history.label)}</div>
+          <div class="factor-bar"><div style="width:${(factors.repayment_history.score / factors.repayment_history.max)*100}%;background:var(--accent)"></div></div>
+        </div>
+        <div class="factor-card">
+          <div class="factor-title">Card Utilization</div>
+          <div class="factor-val">${esc(factors.credit_utilization.value)}</div>
+          <div class="factor-bar"><div style="width:${(factors.credit_utilization.score / factors.credit_utilization.max)*100}%;background:var(${factors.credit_utilization.score >= 100 ? '--good' : '--critical'})"></div></div>
+        </div>
+        <div class="factor-card">
+          <div class="factor-title">Debt Burden</div>
+          <div class="factor-val">${esc(factors.debt_burden.value)}</div>
+          <div class="factor-bar"><div style="width:${(factors.debt_burden.score / factors.debt_burden.max)*100}%;background:var(--accent)"></div></div>
+        </div>
+        <div class="factor-card">
+          <div class="factor-title">Credit Facilities</div>
+          <div class="factor-val">${esc(factors.account_mix.value)}</div>
+          <div class="factor-bar"><div style="width:${(factors.account_mix.score / factors.account_mix.max)*100}%;background:var(--accent)"></div></div>
+        </div>
+        <div class="factor-card">
+          <div class="factor-title">Recent Inquiries</div>
+          <div class="factor-val">${esc(factors.enquiries.value)}</div>
+          <div class="factor-bar"><div style="width:${(factors.enquiries.score / factors.enquiries.max)*100}%;background:var(--accent)"></div></div>
+        </div>
+      </div>
+    `;
+
+    const strengthsHtml = analysis.strengths.map((s) => `
+      <li class="analysis-item strength">
+        <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        <span>${esc(s)}</span>
+      </li>
+    `).join("");
+
+    const risksHtml = analysis.risks.map((r) => `
+      <li class="analysis-item risk">
+        <svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        <span>${esc(r)}</span>
+      </li>
+    `).join("");
+
+    const suggestionsHtml = analysis.suggestions.map((s, i) => `
+      <li class="analysis-item suggestion">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+        <div><strong>Step ${i + 1}:</strong> ${esc(s)}</div>
+      </li>
+    `).join("");
+
+    card.innerHTML = `
+      <div class="score-hero">
+        <div class="score-circle-wrap">
+          <svg viewBox="0 0 100 100">
+            <circle class="track" cx="50" cy="50" r="45" />
+            <circle class="progress" cx="50" cy="50" r="45" stroke="var(${colorVar})" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" />
+          </svg>
+          <div class="score-circle-val">
+            <span class="score-number">${idx}</span>
+            <span class="score-max">Score (300-850)</span>
+          </div>
+        </div>
+        <div class="score-meta">
+          <span class="score-badge ${badgeClass}">${esc(cat)}</span>
+          <h3>Credit Health Assessment</h3>
+          <p class="muted small">${esc(analysis.summary)}</p>
+        </div>
+      </div>
+
+      ${factorsHtml}
+
+      <div class="analysis-cols">
+        <div class="analysis-box">
+          <h4><span style="color:var(--good)">✓</span> Financial Strengths</h4>
+          <ul class="analysis-list">${strengthsHtml}</ul>
+        </div>
+        <div class="analysis-box">
+          <h4><span style="color:var(--critical)">⚠</span> Potential Risk Factors</h4>
+          <ul class="analysis-list">${risksHtml}</ul>
+        </div>
+      </div>
+
+      <div class="analysis-box" style="margin-top:20px;">
+        <h4><span style="color:var(--accent)">💡</span> Personalized Improvement Roadmap</h4>
+        <ul class="analysis-list">${suggestionsHtml}</ul>
+      </div>
+    `;
+  }
+
+  async function submitLoanCalculator(e) {
+    e.preventDefault();
+    const btn = $("#lc-calc-btn");
+    setBusy(btn, true, "Calculating…");
+    try {
+      const payload = {
+        monthly_income: parseFloat($("#lc-income").value),
+        existing_emi: parseFloat($("#lc-exist-emi").value) || 0,
+        loan_amount: parseFloat($("#lc-amount").value),
+        interest_rate: parseFloat($("#lc-rate").value),
+        tenure_months: parseInt($("#lc-tenure").value, 10),
+        save: true,
+      };
+      const res = await api("/api/loan-assessment", { method: "POST", body: payload });
+      renderLoanCalculatorResult(res);
+      toast("Loan affordability computed");
+    } catch (err) {
+      toast(err.message, "err");
+    } finally {
+      setBusy(btn, false, "Assess Loan Affordability");
+    }
+  }
+
+  function renderLoanCalculatorResult(res) {
+    const card = $("#lc-result-card");
+    if (!card) return;
+
+    const statusBadge = res.new_dti_percent <= 35
+      ? '<span class="badge badge-yes">Comfortably Affordable</span>'
+      : res.new_dti_percent <= 50
+      ? '<span class="badge badge-warn">Manageable with Budgeting</span>'
+      : '<span class="badge badge-no">High Financial Burden</span>';
+
+    const rows = res.amortization_schedule.map((s) => `
+      <tr>
+        <td>Year ${s.year}</td>
+        <td>₹${fmtNum(s.principal_paid)}</td>
+        <td>₹${fmtNum(s.interest_paid)}</td>
+        <td>₹${fmtNum(s.total_paid)}</td>
+        <td>₹${fmtNum(s.ending_balance)}</td>
+      </tr>
+    `).join("");
+
+    card.innerHTML = `
+      <div class="emi-hero-card">
+        <div class="emi-label">Estimated Monthly EMI</div>
+        <div class="emi-amount">₹${fmtNum(res.estimated_emi)} <span style="font-size:16px;font-weight:400;color:var(--muted)">/ month</span></div>
+        <div style="margin-top:6px">${statusBadge}</div>
+        <p class="muted small" style="margin-top:10px;max-width:520px">${esc(res.explanation)}</p>
+
+        <div class="emi-breakdown-row">
+          <div class="emi-stat-box">
+            <div class="emi-stat-val">₹${fmtNum(res.loan_amount)}</div>
+            <div class="emi-stat-lbl">Principal Borrowed</div>
+          </div>
+          <div class="emi-stat-box">
+            <div class="emi-stat-val" style="color:var(--critical)">₹${fmtNum(res.total_interest)}</div>
+            <div class="emi-stat-lbl">Total Interest</div>
+          </div>
+          <div class="emi-stat-box">
+            <div class="emi-stat-val" style="color:var(--accent)">₹${fmtNum(res.total_repayment)}</div>
+            <div class="emi-stat-lbl">Total Repayment</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:20px;">
+        <div class="analysis-box">
+          <h4>Debt-to-Income (DTI) Impact</h4>
+          <p style="font-size:13px;color:var(--text-2);margin-bottom:8px">Current DTI: <strong>${res.existing_dti_percent}%</strong> → New DTI: <strong style="color:var(${res.new_dti_percent <= 35 ? '--good' : res.new_dti_percent <= 50 ? '--warning' : '--critical'})">${res.new_dti_percent}%</strong></p>
+          <div class="factor-bar"><div style="width:${Math.min(100, res.new_dti_percent)}%;background:var(${res.new_dti_percent <= 35 ? '--good' : res.new_dti_percent <= 50 ? '--warning' : '--critical'})"></div></div>
+          <p class="muted small" style="margin-top:6px">Lender standard guideline ceiling is 50% DTI.</p>
+        </div>
+        <div class="analysis-box">
+          <h4>Safe Borrowing Ceiling</h4>
+          <p style="font-size:13px;color:var(--text-2)">Max recommended loan: <strong>₹${fmtNum(res.max_affordable_loan)}</strong></p>
+          <p class="muted small" style="margin-top:6px">Maximum loan amount affordable within recommended 50% DTI at this tenure.</p>
+        </div>
+      </div>
+
+      <div class="analysis-box">
+        <h4>Annual Amortization Forecast</h4>
+        <div class="table-responsive">
+          <table class="fin-table">
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th>Principal Repaid</th>
+                <th>Interest Paid</th>
+                <th>Total Payment</th>
+                <th>Remaining Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function formatMarkdown(text) {
+    let html = esc(text);
+    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    html = html.replace(/`(.*?)`/g, "<code>$1</code>");
+    html = html.replace(/^&gt;\s?(.*)$/gm, "<blockquote>$1</blockquote>");
+    html = html.replace(/^\s*-\s(.*)$/gm, "<li>$1</li>");
+    html = html.replace(/\n\n/g, "<br><br>");
+    return html;
+  }
+
+  function appendChatMessage(role, content) {
+    const container = $("#chat-messages");
+    if (!container) return;
+    const bubble = document.createElement("div");
+    bubble.className = `chat-bubble ${role}`;
+    bubble.innerHTML = formatMarkdown(content);
+    container.appendChild(bubble);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  async function loadAiChatHistory() {
+    try {
+      const res = await api("/api/assistant/history");
+      const container = $("#chat-messages");
+      if (container && res.messages && res.messages.length > 0) {
+        container.innerHTML = "";
+        res.messages.forEach((m) => appendChatMessage(m.role, m.content));
+      }
+    } catch (e) {
+      console.warn("Error loading chat history", e);
+    }
+  }
+
+  async function sendAiMessage(e) {
+    if (e) e.preventDefault();
+    const input = $("#chat-input");
+    if (!input) return;
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    appendChatMessage("user", msg);
+    input.value = "";
+
+    const btn = $("#chat-send-btn");
+    setBusy(btn, true, "Thinking…");
+
+    try {
+      const consentCheck = $("#ai-consent-check");
+      const res = await api("/api/assistant/chat", {
+        method: "POST",
+        body: {
+          message: msg,
+          include_profile_context: consentCheck ? consentCheck.checked : true,
+        },
+      });
+      appendChatMessage("assistant", res.reply);
+      const statusText = $("#ai-status-text");
+      if (statusText) {
+        statusText.textContent = res.provider === "gemini" || res.provider === "openai" ? `Online · ${res.provider.toUpperCase()} Mode` : "Online · FinTech Expert Advisory";
+      }
+    } catch (err) {
+      appendChatMessage("assistant", `I encountered an issue processing your request: ${err.message}. Please try again.`);
+    } finally {
+      setBusy(btn, false, "Send");
+    }
+  }
+
+  async function clearAiHistory() {
+    if (!confirm("Are you sure you want to clear your conversation history?")) return;
+    try {
+      await api("/api/assistant/history", { method: "DELETE" });
+      const container = $("#chat-messages");
+      if (container) {
+        container.innerHTML = `
+          <div class="chat-bubble assistant">
+            Chat history cleared. How can I assist you today with your credit, loans, or financial planning?
+          </div>
+        `;
+      }
+      toast("Chat history cleared");
+    } catch (e) {
+      toast(e.message, "err");
+    }
+  }
+
   /* ============================================================== init */
   function init() {
     initTheme();
@@ -1163,6 +1582,18 @@
     $("#page-actions").addEventListener("click", onPageAction);
     $("#predict-form").addEventListener("submit", submit);
     $("#reset-btn").addEventListener("click", resetForm);
+    $("#credit-profile-form")?.addEventListener("submit", saveCreditProfile);
+    $("#loan-calc-form")?.addEventListener("submit", submitLoanCalculator);
+    $("#chat-form")?.addEventListener("submit", sendAiMessage);
+    $("#ai-clear-btn")?.addEventListener("click", clearAiHistory);
+    document.addEventListener("click", (e) => { if (e.target.closest("#ai-clear-action-btn")) clearAiHistory(); });
+    $$(".prompt-chip").forEach((btn) => btn.addEventListener("click", () => {
+      const input = $("#chat-input");
+      if (input) {
+        input.value = btn.dataset.prompt;
+        sendAiMessage();
+      }
+    }));
     $("#history-body").addEventListener("click", onHistoryClick);
     $("#history-foot").addEventListener("click", onHistoryClick);
     let t;

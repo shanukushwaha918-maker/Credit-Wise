@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "functions": {
+    "app.py": {
+      "includeFiles": "{backend,frontend,model/artifacts,data}/**"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/app.py"
+    }
+  ]
+}
